@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+
+# Generated simulation outputs
+outputs/
+sim_output/
+building_modified.idf
+
+# Editors & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

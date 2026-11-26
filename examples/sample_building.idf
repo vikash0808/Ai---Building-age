@@ -1,0 +1,44 @@
+!- Sample EnergyPlus Building Model (for testing & offline demo)
+Version,
+  23.1;
+
+Building,
+  SmartOfficeBuilding,
+  0.0,
+  City,
+  0.04,
+  0.4,
+  FullExterior;
+
+!- Geometry surface containing 24.0 as a wall coordinate (must NOT be modified)
+BuildingSurface:Detailed,
+  South_Wall,
+  Wall,
+  Exterior_Wall,
+  Main_Zone,
+  Outdoors,
+  ,
+  SunExposed,
+  WindExposed,
+  0.5,
+  4,
+  0.0, 0.0, 3.0,
+  0.0, 0.0, 0.0,
+  24.0, 0.0, 0.0,
+  24.0, 0.0, 3.0;
+
+Schedule:Compact,
+  Cooling_Setpoint_Schedule,
+  Temperature,
+  Through: 12/31,
+  For: AllDays,
+  Until: 08:00, 28.0,
+  Until: 18:00, 24.0,
+  Until: 24:00, 28.0;
+
+Schedule:Compact,
+  Heating_Setpoint_Schedule,
+  Temperature,
+  Through: 12/31,
+  For: AllDays,
+  Until: 24:00, 20.0;

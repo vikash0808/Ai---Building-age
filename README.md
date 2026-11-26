@@ -4,39 +4,16 @@
 ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
 ![EnergyPlus](https://img.shields.io/badge/EnergyPlus-0078D4?style=for-the-badge)
 
-A Python automation toolkit built for **building energy modeling, automated HVAC setpoint experimentation, and EnergyPlus simulation analytics** (developed as a hackathon project). It provides modular scripts to parse and modify EnergyPlus `.idf` files, run headless EnergyPlus simulations via subprocess, and summarize simulation output metrics using Pandas.
+A Python automation toolkit built for **building energy modeling, safe HVAC setpoint control, and EnergyPlus simulation analytics** (developed as a hackathon project). It parses and modifies EnergyPlus `.idf` cooling schedules safely without touching building geometry, runs EnergyPlus simulations via CLI, and summarizes `eplusout.csv` metrics.
 
 ---
 
 ## ✨ Key Capabilities
 
-- **IDF Model Parsing & Modification (`idf_parser.py`):** Load, edit, and save EnergyPlus Input Data Files (`.idf`) programmatically, including automated cooling setpoint adjustments.
-- **Automated EnergyPlus Runner (`run_simulation.py`):** Invoke the EnergyPlus CLI programmatically with a target `.idf` model, `.epw` weather file, and output directory, capturing exit codes and stdout/stderr logs.
-- **Simulation Output Analytics (`output_reader.py`):** Parse generated `eplusout.csv` files into Pandas DataFrames and compute structured numeric summaries (row counts, column metadata, descriptive statistics).
-- **Setpoint Controller Prototype (`sample_controller.py`):** Demonstrates programmatic cooling setpoint updates (e.g., adjusting `24.0` → `23.0`) to produce modified building models for closed-loop or AI-driven optimization experiments.
-
----
-
-## 🏗️ Workflow Architecture
-
-```text
-  Building Model (.idf)
-           │
-           ▼
-   idf_parser.py / sample_controller.py
-   (Programmatic Setpoint Modification)
-           │
-           ▼
-    run_simulation.py  ◄── Weather File (.epw)
-    (EnergyPlus CLI Execution)
-           │
-           ▼
-      eplusout.csv
-           │
-           ▼
-    output_reader.py
-    (Pandas Parsing & Statistical Summary)
-```
+- **Targeted IDF Setpoint Control (`idf_parser.py`):** Modifies cooling setpoints strictly inside `Schedule:Compact` cooling blocks so unrelated numbers (such as wall coordinates) are never corrupted.
+- **Validated Simulation Runner (`run_simulation.py`):** Validates `.idf`, `.epw`, and EnergyPlus executable paths before launching subprocess simulations with timeouts and captured logs.
+- **Resilient Output Analytics (`output_reader.py`):** Summarizes EnergyPlus `eplusout.csv` metrics (row counts, min, max, mean) using Pandas with an automatic Python stdlib `csv` fallback.
+- **Working CLI & Offline Demo (`main.py`):** Run an end-to-end demo immediately using bundled sample data (`examples/`), even without EnergyPlus installed.
 
 ---
 
@@ -44,11 +21,19 @@ A Python automation toolkit built for **building energy modeling, automated HVAC
 
 ```text
 Ai---Building-age/
-├── idf_parser.py               # Read, modify cooling setpoints, and save .idf files
-├── sample_controller.py        # Example automated cooling setpoint update script
-├── run_simulation.py           # Subprocess wrapper to execute EnergyPlus simulations
-├── output_reader.py            # Pandas reader & summary generator for eplusout.csv
-├── Hackathon_Presentation.pptx # Project pitch & hackathon overview deck
+├── main.py                     # CLI entry point (--demo and full EnergyPlus mode)
+├── idf_parser.py               # Safe cooling-schedule IDF parser & modifier
+├── run_simulation.py           # Validated EnergyPlus CLI subprocess runner
+├── output_reader.py            # EnergyPlus CSV reader & statistical summarizer
+├── sample_controller.py        # Standalone setpoint modification script
+├── examples/
+│   ├── sample_building.idf     # Sample EnergyPlus building model
+│   └── sample_eplusout.csv     # Sample EnergyPlus hourly output CSV
+├── tests/
+│   └── test_pipeline.py        # Automated unit & end-to-end CLI tests
+├── Hackathon_Presentation.pptx # Hackathon overview deck
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
@@ -56,44 +41,32 @@ Ai---Building-age/
 
 ## 💻 Getting Started
 
-### Prerequisites
-- Python 3.9+
-- [EnergyPlus](https://energyplus.net/) installed locally (for executing simulations)
-- `pandas`
-
-### Installation
+### 1. Clone & (Optionally) Install Pandas
 ```bash
 git clone https://github.com/vikash0808/Ai---Building-age.git
 cd Ai---Building-age
-pip install pandas
+pip install -r requirements.txt
 ```
 
-### Example Usage
-
-**1. Modify a building's cooling setpoint:**
-```python
-from idf_parser import load_idf, save_idf, replace_cooling_setpoint
-
-idf_text = load_idf("building.idf")
-updated_idf = replace_cooling_setpoint(idf_text, "24.0", "23.0")
-save_idf("building_modified.idf", updated_idf)
+### 2. Run the Offline Demo (No EnergyPlus Required)
+```bash
+python main.py --demo
 ```
 
-**2. Run an EnergyPlus simulation and analyze results:**
-```python
-from run_simulation import run_energyplus
-from output_reader import read_csv, summarize
+### 3. Run with a Real EnergyPlus Installation
+```bash
+python main.py \
+  --idf path/to/building.idf \
+  --weather path/to/weather.epw \
+  --energyplus /path/to/energyplus \
+  --old-setpoint 24.0 \
+  --new-setpoint 23.0 \
+  --output-dir outputs
+```
 
-res = run_energyplus(
-    energyplus_exe="/path/to/energyplus",
-    idf_file="building_modified.idf",
-    weather_file="weather.epw",
-    output_dir="sim_output",
-)
-
-if res["returncode"] == 0:
-    df = read_csv("sim_output")
-    print(summarize(df))
+### 4. Run Unit Tests
+```bash
+python -m unittest discover -s tests -v
 ```
 
 ---
